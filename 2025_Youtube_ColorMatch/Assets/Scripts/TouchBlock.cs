@@ -7,14 +7,10 @@ public class TouchBlock : MonoBehaviour, IPointerClickHandler
     [SerializeField]
     private GameController  gameController;
     [SerializeField] 
-    private BlockSpawner    blockSpawner; 
-    
-    public Color Color { get; private set; }
-
-    private void Awake()
-    {
-        Color = GetComponent<SpriteRenderer>().color;
-    }
+    private BlockSpawner    blockSpawner;
+    [SerializeField] 
+    private int             blockID;
+    public int BlockID => blockID; 
 
     public void OnPointerClick(PointerEventData eventData)
     {
@@ -27,11 +23,9 @@ public class TouchBlock : MonoBehaviour, IPointerClickHandler
         {
             return;
         }
-        
-        // 동일 색상일 경우, 점수 획득 및 블록 행동 처리
-        if (Color.Equals(block.Color))
+
+        if (BlockID.Equals(block.BlockID))
         {
-            // 점수 증가 & 블록 행동 처리
             gameController.CurrentScore++;
             block.CorrectAction();
         }

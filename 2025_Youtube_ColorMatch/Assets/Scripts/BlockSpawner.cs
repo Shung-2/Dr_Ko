@@ -8,7 +8,7 @@ public class BlockSpawner : MonoBehaviour
     [SerializeField]
     private GameController      gameController;
     [SerializeField] 
-    private Color[]             colors;
+    private Sprite[]            catSprites;
     [SerializeField] 
     private GameObject          blockPrefab;
     [SerializeField] 
@@ -19,7 +19,9 @@ public class BlockSpawner : MonoBehaviour
     private MemoryPool          memoryPool;
     private Queue<GameObject>   blockQueue;
     public  Queue<GameObject>   BlockQueue => blockQueue;
-    
+
+    // 블록 깜짝일 확률
+    private const float BLINK_PROBABILITY = 0.2f;
 
     private void Awake()
     {
@@ -47,11 +49,21 @@ public class BlockSpawner : MonoBehaviour
         if (Time.time - lastSpawnTime >= gameController.SpawnTime)
         {
             int xIndex = Random.Range(0, spawnX.Length);
-            int colorIndex = Random.Range(0, colors.Length);
+            int spriteIndex = Random.Range(0, catSprites.Length);
             
-            var block = memoryPool.ActivatePoolItem(new Vector3(spawnX[xIndex], spawnY, 0f));
-            block.GetComponent<Block>().Setup(gameController, this, colors[colorIndex]);
-            blockQueue.Enqueue(block);
+            var blockGO = memoryPool.ActivatePoolItem(new Vector3(spawnX[xIndex], spawnY, 0f));
+            var block = blockGO.GetComponent<Block>();
+
+            // 깜빡임 여부 결정 및 Setup 메소드 호출
+            bool shouldBlink = false;
+            if (gameController.CurrentScore > 50 && Random.value < BLINK_PROBABILITY)
+            {
+                shouldBlink = true;
+            }
+            
+            // Block의 Setup에 깜짝임 정보 전달
+            block.Setup(gameController, this, spriteIndex, catSprites[spriteIndex], shouldBlink, gameController.BlinkDuration);
+            blockQueue.Enqueue(blockGO);
             lastSpawnTime = Time.time;
         }
     }

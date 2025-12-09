@@ -12,12 +12,18 @@ public class GameController : MonoBehaviour
     [HideInInspector] 
     public UnityAction<float>   OnMoveSpeedChanged;
 
-    private readonly float      baseSpawnTime = 2f;
+    private readonly float      baseSpawnTime = 2.5f;
     private readonly float      spawnSpeedDelta = 0.1f;
     private readonly float      changeSpawnCycle = 10f;
     private float               lastChangeSpawnTime;
     private int                 currentScore;
     private AudioSource         audioSource;
+    
+    // 깜빡임 효과 관련 변수들
+    private readonly float      baseBlinkDuration   = 2.0f; // 기본 깜빡임 주기 (2초)
+    private readonly float      minBlinkDuration    = 1.0f; // 최소 깜빡임 주기 (1초)
+    private float               blinkDuration;              // 현재 적용될 깜빡임 주기
+    public  float               BlinkDuration => blinkDuration;
 
     [field: SerializeField] 
     public  float   GameSpeed   { get; private set; } = 1f;         // 게임 속도 1배, 1.1배, ...
@@ -35,6 +41,8 @@ public class GameController : MonoBehaviour
         {
             currentScore = value;
             uiController.UpdateScore(currentScore);
+            // 깜빡임 주기 계산
+            UpdateBlinkDifficulty();
         }
     }
 
@@ -65,11 +73,12 @@ public class GameController : MonoBehaviour
 
     private void Reset()
     {
-        IsGamePlay  = false;
-        IsGameOver  = false;
-        GameSpeed   = 1f;
-        SpawnTime   = baseSpawnTime / GameSpeed;
-        MoveSpeed   = 1f / SpawnTime;
+        IsGamePlay      = false;
+        IsGameOver      = false;
+        GameSpeed       = 1f;
+        SpawnTime       = baseSpawnTime / GameSpeed;
+        MoveSpeed       = 1f / SpawnTime;
+        blinkDuration   = baseBlinkDuration;
     }
 
     private void Update()
@@ -88,6 +97,22 @@ public class GameController : MonoBehaviour
             OnMoveSpeedChanged?.Invoke(MoveSpeed);
             lastChangeSpawnTime = Time.time;
         }
+    }
+
+    private void UpdateBlinkDifficulty()
+    {
+        if (currentScore <= 50)
+        {
+            blinkDuration = baseBlinkDuration;
+            return;
+        }
+        
+        // 50점을 초과한 점수에 대해 10점마다 0.1초씩 감소
+        int scoreTier = (currentScore - 51) / 10;
+        float reduction = scoreTier * 0.1f;
+        
+        // Mathf.Max를 사용하여 최소 주기 이하로 내려가지 않도록 보정
+        blinkDuration = Mathf.Max(minBlinkDuration, blinkDuration - reduction);
     }
 
     public void GameOver()
